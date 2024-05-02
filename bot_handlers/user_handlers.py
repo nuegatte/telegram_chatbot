@@ -7,3 +7,4 @@ user_router = Router()
 async def cmd_start(msg : types.Message) -> None: 
     # start command
     await msg.answer("hello <b>world<b>!")
+#this
