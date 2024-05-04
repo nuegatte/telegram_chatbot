@@ -1,7 +1,9 @@
-from aiogram import Bot
-from token_api import bot_token
+from aiogram import Bot, types
+
+from token_api import TOKEN_API
+
 
 bot = Bot(
-    token= bot_token,
-    parse_mode= 'HTML'
+    token=TOKEN_API,
+    parse_mode='HTML'
 )

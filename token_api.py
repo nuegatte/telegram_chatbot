@@ -1,1 +1,1 @@
-bot_token = '6749403874:AAGblk3PytlIRzvs7n6Dowmeuf_87LYp4VM'
+TOKEN_API = "6749403874:AAGblk3PytlIRzvs7n6Dowmeuf_87LYp4VM"
