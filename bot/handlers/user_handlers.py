@@ -1,26 +1,11 @@
 from aiogram import Router, types 
 from aiogram.filters import Command
-
-
-
 from bot.config import BotConfig
+from bot import keyboard
 
 user_router = Router()
 
-from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 
-
-
-keeb = ReplyKeyboardMarkup(
-keyboard=[
-    [
-    KeyboardButton(text = "/start")
-    ]
-    
-],
-resize_keyboard=True,
-one_time_keyboard=True
-)
 # @user_router.message(Command('start'))
 # async def cmd_start(msg: types.Message) -> None:
 #     """Process the `start` command"""
@@ -32,7 +17,7 @@ one_time_keyboard=True
 async def cmd_reply(message: types.Message):
     """The function replies to your message"""
 
-    await message.answer('Reply message replies! 😻', reply_markup=keeb)
+    await message.answer('Reply message replies! 😻', reply_markup= keyboard.keeb)
 
 
 @user_router.message(Command("dice"))
