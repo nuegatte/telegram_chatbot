@@ -12,6 +12,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from aiogram.filters.state import StateFilter
+from random import randint
 
 user_router = Router()
 
@@ -58,7 +59,7 @@ async def process_password_callback(callback_query: types.CallbackQuery, state: 
     await state.set_state(LoginStates.password)
 
 @user_router.message(StateFilter(LoginStates.password))
-async def process_password_message(message: types.Message, state: FSMContext):
+async def process_password_message(message: types.Message):
     LOGIN_DATA['password'] = message.text
     # Check the login credentials
     sample_credentials = {
@@ -72,21 +73,21 @@ async def process_password_message(message: types.Message, state: FSMContext):
         await message.answer(message.from_user.id, "Invalid username or password.")
 
 
-
+# reply menu 
 @user_router.message(Command("reply"))
 async def cmd_reply(message: types.Message):
     """The function replies to your message"""
 
     await message.answer('Reply message replies! 😻', reply_markup= keyboard.reply_kb)
 
-
+# dice emoji
 @user_router.message(Command("dice"))
 async def cmd_dice(message: types.Message):
     """The function answers dice to your message"""
     
     await message.answer_dice(emoji="🎲")
 
-
+# admin infos 
 @user_router.message(Command("admin_info"))
 async def cmd_admin_info(message: types.Message, config: BotConfig):
     if message.from_user.id in config.admin_ids:
@@ -95,21 +96,36 @@ async def cmd_admin_info(message: types.Message, config: BotConfig):
         await message.answer("You are not an admin.")
 
 
-# @user_router.message(Command("start"))
-# async def cmd_start(message: types.Message, config: BotConfig):
-#     await message.answer(config.welcome_message, reply_markup= keyboard.ikb)
 
+#reply random number generator 
+@user_router.message(Command("random"))
+async def random(message : types.Message):
+    def rand():
+        start = 10 ** (6 -1)
+        end = (10**6)-1
+        return randint(start, end)
+    num = rand()
+    await message.answer(f"The random 6  digits are {str(num)}")
+
+
+#respond to certain text in messages
 @user_router.message()
 async def echo_message(message: types.Message):
-    if "hi " in message.text.lower() or "hello" in message.text.lower() or "hai " in message.text.lower():
+    if "hi" in message.text.upper() or "hello" in message.text.lower() or "hai " in message.text.lower():
         await message.answer("Hello brother! How are you?")
     elif "bye" in message.text.lower() or " bai " in message.text.lower()  or "cya" in message.text.lower():
         await message.answer("Bye brother! See you soon!")
         sys.exit(0)
+    elif "nice" in message.text.lower():
+        await message.answer("nice balls bro lol!")
+        
     else:
         await message.answer("Your message is not impactful enough for a special response.")
 
 
+
+
+#inline reply/callback 
 @user_router.callback_query(F.data == "hello")
 async def testingbro(query : CallbackQuery,config: BotConfig):
     await query.message.answer('LESGOOOOOOOOO')
@@ -127,48 +143,11 @@ async def testingbro(query : CallbackQuery):
     await cmd_reply(query.message)
 
 
-login_data = {
-    "user1": "password1",
-    "user2": "password2",
-    # Add more users and passwords as needed
-}
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
-
-
-# Define the login data
-LOGIN_DATA = {
-    "user" : "123"
-}
-
-# # Define the login keyboard
-# @user_router.message(Command("start")))
-# async def send_login_menu(message: types.Message):
-#     keyboard = types.InlineKeyboardMarkup()
-#     username_button = types.InlineKeyboardButton(text="Enter username", callback_data="username")
-#     password_button = types.InlineKeyboardButton(text="Enter password", callback_data="password")
-#     keyboard.row(username_button, password_button)
-#     await message.answer("Please enter your login credentials.", reply_markup=keyboard)
-
-# # Handle username and password input
-# @user_router.callback_query(F.data)
-# async def process_callback_query(callback_query: types.CallbackQuery):
-#     data = callback_query.data
-#     if data == "username":
-#         await callback_query.message.answer(callback_query.from_user.id, "Enter your username:")
-#         LOGIN_DATA['username'] = await bot.ask(callback_query.from_user.id, "username")
-#     elif data == "password":
-#         await bot.answer_callback_query(callback_query.id)
-#         await callback_query.message.answer(callback_query.from_user.id, "Enter your password:")
-#         LOGIN_DATA['password'] = await bot.ask(callback_query.from_user.id, "password")
-
-#         # Check the login credentials
-#         if LOGIN_DATA['username'] == "YOUR_USERNAME" and LOGIN_DATA['password'] == "YOUR_PASSWORD":
-#             await callback_query.message.answer(callback_query.from_user.id, "Login successful!")
-#         else:
-#             await callback_query.message.answer(callback_query.from_user.id, "Invalid username or password.")
 
 
 
