@@ -1,21 +1,19 @@
 from aiogram import Router, types , F
 from aiogram.types import CallbackQuery
-from aiogram.filters import Command
-# from fractions import Fraction as F
-# from aiogram.handlers import CallbackQueryHandler
-# from aiogram.filters.callback_data import CallbackData
+from aiogram.filters import Command, CommandObject
 from bot.config import BotConfig
 from bot import keyboard
 import sys, logging
 
-# from aiogram.fsm.context import FSMContext
-# from aiogram.fsm.state import State, StatesGroup
-
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import StateFilter
 from random import randint
 
 user_router = Router()
 
+class RepeatState(StatesGroup):
+    waiting_for_input = State()
 
 # Define the message handler for the "/start" command
 @user_router.message(Command("start"))
@@ -27,6 +25,27 @@ async def cmd_start(message: types.Message):
 async def sub_input(call: CallbackQuery):
     await call.message.edit_text("Enter the name:")
 
+
+
+#  uninterrupted service example : repeat message
+
+
+
+@user_router.message(Command("repeat"))
+async def repeat(message: types.Message, state: FSMContext):
+    await message.answer("Tell me something and I will repeat it!")
+    await message.answer("Enter your message:", reply_markup=types.ReplyKeyboardRemove())
+    await state.set_state(RepeatState.waiting_for_input)
+    await state.update_data(message=message)
+
+@user_router.message(RepeatState.waiting_for_input)
+async def process_input(message: types.Message, state: FSMContext):
+    await state.clear()
+    await message.answer(f"||{message.text}||", parse_mode="MarkdownV2")
+
+
+
+        
 @user_router.callback_query(F.data == "hello2")
 async def testingbro(query : CallbackQuery):
     await query.message.answer('LESGOOOOOOOOO 3rd inline !!!!!!')
@@ -78,10 +97,6 @@ async def echo_message(message: types.Message):
         await message.answer("nice balls bro lol!")
         
 
-
-
-
-
 #inline reply/callback 
 @user_router.callback_query(F.data == "hello")
 async def testingbro(query : CallbackQuery,config: BotConfig):
@@ -94,18 +109,7 @@ async def testingbro(query : CallbackQuery,config: BotConfig):
     await cmd_admin_info(query.message, config)
 
 
-
-
-
-
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Initialize bot and dispatcher
-
-
-
-
-
-# Initialize bot
 

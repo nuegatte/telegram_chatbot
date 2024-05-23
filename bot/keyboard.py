@@ -32,6 +32,7 @@ reply_kb = ReplyKeyboardMarkup(
     one_time_keyboard=True #hides the keyboard afer tapping one time 
 )
 
+
     #inline keyboard
 ikb = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -44,10 +45,14 @@ ikb = InlineKeyboardMarkup(
     ]
 )
 
+
 # subject code enter command
 subject_ikb = InlineKeyboardMarkup(
     inline_keyboard=
     [
-        InlineKeyboardButton(text= "Create a new subject", callback_data="sub_input")
+        [
+            InlineKeyboardButton(text= "Create a new subject", callback_data="sub_input")
+        ]
+        
     ]
 )

@@ -1,7 +1,5 @@
 import asyncio 
-
 from aiogram import Dispatcher
-
 from bot_instance import bot
 from bot.bot_handlers.user_handlers import user_router
 from bot.config import BotConfig
@@ -11,7 +9,6 @@ def register_routers(dp: Dispatcher) -> None:
     """Registers routers"""
 
     dp.include_router(user_router)
-
 
 
 async def main() -> None:
@@ -26,14 +23,10 @@ async def main() -> None:
 
     register_routers(dp)
 
-    #check if bot is running
-    print("bot is running now!!")
     await dp.start_polling(bot) #bot proceeds polling
 
-    #when polling stops ( CTRL + C  in the terminal )
-    print("bot is stopping!!")
 
- 
+
 
 # main 
 if __name__ == "__main__":
