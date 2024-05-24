@@ -12,10 +12,10 @@ from random import randint
 
 user_router = Router()
 
-<<<<<<< HEAD
+
 class RepeatState(StatesGroup):
     waiting_for_input = State()
-=======
+
 # finite state class
 class RepeatState(StatesGroup):
     waiting_for_input = State()
@@ -28,11 +28,11 @@ repeat - uninterrupted repeat msg
 reply - reply menu 
 dice - dice emoji
 admin_info - yes
+stop - stop process
 random - rnadom 6 digit number
 
 
 """
->>>>>>> 3da5d8ff667620675672290eea0ec06e6e056d97
 
 # Define the message handler for the "/start" command
 @user_router.message(Command("start"))
@@ -53,9 +53,12 @@ async def sub_output(message: types.Message, state: FSMContext):
         end = (10**6)-1
         return randint(start, end)
     num = rand()
-    await message.answer(f"Your subject name is: {message.text}, code : ||{str(num)}||", parse_mode="MarkdownV2")
+    await message.answer(f"Subject Name: {message.text}\nSubject code : ||{str(num)}||", parse_mode="MarkdownV2")
 
-
+@user_router.message(Command("stop"))
+async def cmd_stop(message: types.Message):
+    await message.answer("Bot stopping. Restart @ VS code.")
+    sys.exit(0)
 
 
 #  uninterrupted service example : repeat message
@@ -141,6 +144,7 @@ async def echo_message(message: types.Message):
     elif "nice" in message.text.lower():
         await message.answer("nice balls bro lol!")
         
+
 
 #inline reply/callback 
 @user_router.callback_query(F.data == "hello")

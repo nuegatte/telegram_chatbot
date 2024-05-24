@@ -48,18 +48,12 @@ ikb = InlineKeyboardMarkup(
 
 # subject code enter command
 subject_ikb = InlineKeyboardMarkup(
-<<<<<<< HEAD
+
     inline_keyboard=
     [
         [
             InlineKeyboardButton(text= "Create a new subject", callback_data="sub_input")
         ]
-        
-=======
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(text= "Create a new subject", callback_data=("sub_input"))
-        ]
->>>>>>> 3da5d8ff667620675672290eea0ec06e6e056d97
+
     ]
 )
