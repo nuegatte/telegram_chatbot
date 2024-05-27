@@ -1,0 +1,82 @@
+import pyrebase
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.utils import executor
+import logging
+
+# Firebase configuration
+firebaseConfig = {
+    'apiKey': "AIzaSyBUAKY_gfQGaT2JIlRCIQnmnjWCFcdz15s",
+    'authDomain': "telegrambot-7a928.firebaseapp.com",
+    'projectId': "telegrambot-7a928",
+    'storageBucket': "telegrambot-7a928.appspot.com",
+    'messagingSenderId': "893954792155",
+    'appId': "1:893954792155:web:406477807c0f2204058afe",
+    'measurementId': "G-PZSM6KEE3S",
+    'databaseURL': "https://telegrambot-7a928.firebaseio.com"
+}
+
+firebase = pyrebase.initialize_app(firebaseConfig)
+auth = firebase.auth()
+
+# Initialize bot and dispatcher
+API_TOKEN = 'YOUR_TELEGRAM_BOT_API_TOKEN'
+
+logging.basicConfig(level=logging.INFO)
+
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
+
+# Start command handler
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton("Sign Up", callback_data='signup'))
+    markup.add(InlineKeyboardButton("Login", callback_data='login'))
+    await message.reply("Welcome! Choose an option:", reply_markup=markup)
+
+# Callback query handler
+@dp.callback_query_handler(lambda c: c.data in ['signup', 'login'])
+async def process_callback(callback_query: types.CallbackQuery):
+    action = callback_query.data
+    await bot.answer_callback_query(callback_query.id)
+    
+    if action == 'signup':
+        await bot.send_message(callback_query.from_user.id, "Enter your email:")
+        dp.register_message_handler(process_signup_email, state='signup_email')
+    elif action == 'login':
+        await bot.send_message(callback_query.from_user.id, "Enter your email:")
+        dp.register_message_handler(process_login_email, state='login_email')
+
+# Process signup email
+async def process_signup_email(message: types.Message):
+    email = message.text
+    await bot.send_message(message.chat.id, "Enter your password:")
+    dp.register_message_handler(lambda msg: process_signup_password(msg, email), state='signup_password')
+
+async def process_signup_password(message: types.Message, email):
+    password = message.text
+    try:
+        user = auth.create_user_with_email_and_password(email, password)
+        await bot.send_message(message.chat.id, "Account successfully created.")
+    except:
+        await bot.send_message(message.chat.id, "Email already exists.")
+
+# Process login email
+async def process_login_email(message: types.Message):
+    email = message.text
+    await bot.send_message(message.chat.id, "Enter your password:")
+    dp.register_message_handler(lambda msg: process_login_password(msg, email), state='login_password')
+
+async def process_login_password(message: types.Message, email):
+    password = message.text
+    try:
+        user = auth.sign_in_with_email_and_password(email, password)
+        await bot.send_message(message.chat.id, "Logged in successfully.")
+    except:
+        await bot.send_message(message.chat.id, "Invalid email or password.")
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)

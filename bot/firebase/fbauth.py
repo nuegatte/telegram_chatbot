@@ -1,6 +1,5 @@
 import pyrebase
-
-
+import os
 
 firebaseConfig = {
     'apiKey': "AIzaSyBUAKY_gfQGaT2JIlRCIQnmnjWCFcdz15s",
@@ -9,13 +8,29 @@ firebaseConfig = {
     'storageBucket': "telegrambot-7a928.appspot.com",
     'messagingSenderId': "893954792155",
     'appId': "1:893954792155:web:406477807c0f2204058afe",
-    'measurementId' : "G-PZSM6KEE3S",
+    'measurementId': "G-PZSM6KEE3S",
     'databaseURL': "https://telegrambot-7a928.firebaseio.com"
 }
 
-
 firebase = pyrebase.initialize_app(firebaseConfig)
-auth = firebase.auth()
+# auth = firebase.auth()
+
+# storage options
+storage = firebase.storage()
+
+# upload to storage
+file = input("File name you want to upload to storage: ")
+cloudfilename = input("File name in storage: ")
+
+# Check if the file exists
+if os.path.isfile(file):
+    storage.child(cloudfilename).put(file)
+    print(f"File '{file}' successfully uploaded to '{cloudfilename}'")
+else:
+    print(f"Error: File '{file}' not found.")
+
+
+# login options 
 
 def signup():
     email = input("enter yur email: ")
@@ -39,10 +54,9 @@ def login():
     except:
         print("pass/email error, input again  ")
 
-
-
-ans = input("new user? y/n")
-if ans== 'y':
-    signup()
-elif ans == 'n':
-    login()
+def menu():
+    ans = input("new user? y/n")
+    if ans== 'y':
+        signup()
+    elif ans == 'n':
+        login()
