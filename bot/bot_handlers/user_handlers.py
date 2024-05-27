@@ -10,11 +10,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import StateFilter
 from random import randint
 
+from firebase import fbauth
+
 user_router = Router()
 
-
-class RepeatState(StatesGroup):
-    waiting_for_input = State()
 
 # finite state class
 class RepeatState(StatesGroup):
@@ -33,6 +32,9 @@ random - rnadom 6 digit number
 
 
 """
+
+@user_router.message(Command("menu"))
+async def cmd_menu(message)
 
 # Define the message handler for the "/start" command
 @user_router.message(Command("start"))
