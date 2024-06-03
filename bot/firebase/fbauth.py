@@ -1,4 +1,5 @@
 import pyrebase
+import pandas as pd
 import os
 
 
@@ -50,7 +51,37 @@ def dbpush():
         else:
             print("Invalid choice. Please enter 1, 2, or q to quit.")
 
-dbpush()
+# dbpush()
+
+
+def fetch_data():
+    # Fetch data from Firebase
+    to_do_list = db.child("Todolist").get()
+    student_list = db.child("studentList").get()
+
+    # Create lists to store the data
+    to_do_data = []
+    student_data = []
+
+    # Process and store the data for the to-do list
+    for item in to_do_list.each():
+        to_do_data.append(item.val())
+
+    # Process and store the data for the student list
+    for item in student_list.each():
+        student_data.append(item.val())
+
+    # Create pandas DataFrames
+    to_do_df = pd.DataFrame(to_do_data)
+    student_df = pd.DataFrame(student_data)
+
+    # Display the data as tables
+    print("To-Do List:")
+    print(to_do_df)
+    print("\nStudent List:")
+    print(student_df)
+
+# fetch_data()
 # dt = {"name": "Alkin", "age" :12, "address" : ["new york", "new street" ]}
 # db.child("branch").child("employee").child("male employee").child("alkin's info").push(dt)
 # #  

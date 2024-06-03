@@ -10,7 +10,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import StateFilter
 from random import randint
 
-from firebase import fbauth
+from ..firebase.fbauth import db
 
 user_router = Router()
 
@@ -33,8 +33,8 @@ random - rnadom 6 digit number
 
 """
 
-@user_router.message(Command("menu"))
-async def cmd_menu(message)
+# @user_router.message(Command("menu"))
+# async def cmd_menu(message)
 
 # Define the message handler for the "/start" command
 @user_router.message(Command("start"))
@@ -55,7 +55,16 @@ async def sub_output(message: types.Message, state: FSMContext):
         end = (10**6)-1
         return randint(start, end)
     num = rand()
-    await message.answer(f"Subject Name: {message.text}\nSubject code : ||{str(num)}||", parse_mode="MarkdownV2")
+
+    sub_name = message.text
+    sub_code = str(num)
+
+    data = {
+        "subject_name": sub_name,
+        "subject_code": sub_code
+    }
+    db.child("Subject List").child(sub_code).set(data)
+    await message.answer(f"Subject Name: {message.text}\nSubject code : ||{sub_code}||", parse_mode="MarkdownV2")
 
 @user_router.message(Command("stop"))
 async def cmd_stop(message: types.Message):
