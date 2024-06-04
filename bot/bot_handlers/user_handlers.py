@@ -1,16 +1,14 @@
 from aiogram import Router, types , F
 from aiogram.types import CallbackQuery
-from aiogram.filters import Command, CommandObject
+from aiogram.filters import Command
 from bot.config import BotConfig
 from bot import keyboard
-import sys, logging
-
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from aiogram.filters.state import StateFilter
 from random import randint
-
 from ..firebase.fbauth import db
+import sys, logging
+
 
 user_router = Router()
 
@@ -49,23 +47,54 @@ async def sub_input(call: CallbackQuery, state : FSMContext):
 
 @user_router.message(RepeatState.waiting_for_input)
 async def sub_output(message: types.Message, state: FSMContext):
+    subject_name = message.text
+
+    # Query the database to check for duplicate subject names
+    existing_subjects = db.child("Subject List").order_by_child("subject_name").equal_to(subject_name).get()
+
+    if existing_subjects.each():
+        # If a duplicate is found, inform the user
+        await message.answer("This subject name already exists. Please enter a different subject name.")
+    else:
+        # Generate a random 6-digit subject code
+        def rand():
+            start = 10 ** (6 - 1)
+            end = (10 ** 6) - 1
+            return randint(start, end)
+
+        sub_code = str(rand())
+
+        # Prepare the data to be added to the database
+        data = {
+            "subject_name": subject_name,
+            "subject_code": sub_code
+        }
+
+        # Add the new subject to the database
+        db.child("Subject List").child(sub_code).set(data)
+        await message.answer(f"Subject Name: {subject_name}\nSubject Code: ||{sub_code}||", parse_mode="MarkdownV2")
+
+    # Clear the state
     await state.clear()
-    def rand():
-        start = 10 ** (6 -1)
-        end = (10**6)-1
-        return randint(start, end)
-    num = rand()
 
-    sub_name = message.text
-    sub_code = str(num)
 
-    data = {
-        "subject_name": sub_name,
-        "subject_code": sub_code
-    }
-    db.child("Subject List").child(sub_code).set(data)
-    await message.answer(f"Subject Name: {message.text}\nSubject code : ||{sub_code}||", parse_mode="MarkdownV2")
+@user_router.message(Command("check_subjects"))
+async def check_subjects(message: types.Message):
+    # Query the database for all subjects
+    subjects = db.child("Subject List").get()
+    
+    if subjects.each():
+        # If there are subjects, format and send the list
+        response = "Here are the existing subjects:\n\n"
+        for subject in subjects.each():
+            data = subject.val()
+            response += f"Subject Name: {data['subject_name']}\nSubject Code: {data['subject_code']}\n\n"
+    else:
+        response = "No subjects found in the database."
 
+    await message.answer(response)
+
+    # stop command
 @user_router.message(Command("stop"))
 async def cmd_stop(message: types.Message):
     await message.answer("Bot stopping. Restart @ VS code.")
