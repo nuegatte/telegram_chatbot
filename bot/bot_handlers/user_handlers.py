@@ -31,9 +31,6 @@ random - rnadom 6 digit number
 
 """
 
-# @user_router.message(Command("menu"))
-# async def cmd_menu(message)
-
 # Define the message handler for the "/start" command
 @user_router.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -138,9 +135,6 @@ async def process_input(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer(f"||{message.text}||", parse_mode="MarkdownV2")
 
-
-
-        
 @user_router.callback_query(F.data == "hello2")
 async def testingbro(query : CallbackQuery):
     await query.message.answer('LESGOOOOOOOOO 3rd inline !!!!!!')
@@ -168,10 +162,6 @@ async def cmd_admin_info(message: types.Message, config: BotConfig):
     else:
         await message.answer("You are not an admin.")
 
-
-
-
-
 #respond to certain text in messages
 @user_router.message()
 async def echo_message(message: types.Message):
@@ -185,7 +175,6 @@ async def echo_message(message: types.Message):
         await message.answer("nice balls bro lol!")
         
 
-
 #inline reply/callback 
 @user_router.callback_query(F.data == "hello")
 async def testingbro(query : CallbackQuery,config: BotConfig):
@@ -196,7 +185,6 @@ async def testingbro(query : CallbackQuery,config: BotConfig):
 async def testingbro(query : CallbackQuery,config: BotConfig):
     await query.message.answer('This is the 2nd inline button lesgooooooo')
     await cmd_admin_info(query.message, config)
-
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

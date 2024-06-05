@@ -1,7 +1,5 @@
 import pyrebase
 
-
-
 firebaseConfig = {
     'apiKey': "AIzaSyBUAKY_gfQGaT2JIlRCIQnmnjWCFcdz15s",
     'authDomain': "telegrambot-7a928.firebaseapp.com",
@@ -17,5 +15,3 @@ firebase = pyrebase.initialize_app(firebaseConfig)
 auth = firebase.auth()
 
 db = firebase.database()
-
-
