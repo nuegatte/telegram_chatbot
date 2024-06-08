@@ -8,38 +8,57 @@ from aiogram.fsm.context import FSMContext
 from random import randint
 from ..firebase.fbauth import db
 import sys, logging
+import asyncio
+
 
 
 user_router = Router()
 
 
+# Set up logging, show message handling in real time
+logging.basicConfig(level=logging.INFO)
+
 # finite state class
+# sets state to prevent interruption from other commands/responds
 class RepeatState(StatesGroup):
     waiting_for_input = State()
+
 
 """
 commands
 
+testing - testing the modes
 start - start the bot 
 repeat - uninterrupted repeat msg
 reply - reply menu 
 dice - dice emoji
 admin_info - yes
 stop - stop process
-random - rnadom 6 digit number
+random - random 6 digit number
 
 
 """
+@user_router.message(Command("testings"))
+async def cmd_start(message: types.Message):
+    await message.answer("Testing bot is working!", reply_markup= keyboard.testingKB)
 
-# Define the message handler for the "/start" command
+@user_router.callback_query(F.data == "tutor")
+async def tutor_callback(call: CallbackQuery, state : FSMContext):
+    await state.set(RepeatState.waiting_for_input)
+    await call.message.edit_text("Welcome, tutor. ", reply_markup= keyboard.tutorKB)
+    async def 
+    
+
+
+# /start command - create new subject for lecturers
 @user_router.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer("Welcome, fellow tutor!", reply_markup=keyboard.subject_ikb)
 
 @user_router.callback_query(F.data == "sub_input")
 async def sub_input(call: CallbackQuery, state : FSMContext):
-    await call.message.edit_text("Enter the subject name:")
     await state.set_state(RepeatState.waiting_for_input)
+    await call.message.edit_text("Enter the subject name:")
     await state.update_data(message=call)
 
 @user_router.message(RepeatState.waiting_for_input)
@@ -59,7 +78,7 @@ async def sub_output(message: types.Message, state: FSMContext):
             end = (10 ** 6) - 1
             return randint(start, end)
 
-        sub_code = str(rand())
+        sub_code = (rand())
 
         # Prepare the data to be added to the database
         data = {
@@ -69,7 +88,7 @@ async def sub_output(message: types.Message, state: FSMContext):
 
         # Add the new subject to the database
         db.child("Subject List").child(sub_code).set(data)
-        await message.answer(f"Subject Name: {subject_name}\nSubject Code: ||{sub_code}||", parse_mode="MarkdownV2")
+        await message.answer(f"Subject Name: {subject_name}\nSubject Code: ||{str(sub_code)}||", parse_mode="MarkdownV2")
 
     # Clear the state
     await state.clear()
@@ -95,7 +114,8 @@ async def check_subjects(message: types.Message):
 @user_router.message(Command("stop"))
 async def cmd_stop(message: types.Message):
     await message.answer("Bot stopping. Restart @ VS code.")
-    sys.exit(0)
+    asyncio.get_event_loop().call_later(0.5, sys.exit, 0)
+    # await sys.exit(0)
 
 
 #  uninterrupted service example : repeat message
@@ -169,8 +189,7 @@ async def echo_message(message: types.Message):
         await message.answer("Hello brother! How are you?")
     elif "bye" in message.text.lower() or " bai " in message.text.lower()  or "cya" in message.text.lower():
         await message.answer("Bye brother! See you soon!")
-        await message.answer("Bot process ended. Please restart via VS code.")
-        sys.exit(0)
+        await cmd_stop(message)
     elif "nice" in message.text.lower():
         await message.answer("nice balls bro lol!")
         
@@ -186,7 +205,6 @@ async def testingbro(query : CallbackQuery,config: BotConfig):
     await query.message.answer('This is the 2nd inline button lesgooooooo')
     await cmd_admin_info(query.message, config)
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+
 
 

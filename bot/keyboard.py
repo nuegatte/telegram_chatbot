@@ -11,7 +11,25 @@ class MyCallback(CallbackData, prefix = "my"):
     bar : int
 
 
+testingKB = InlineKeyboardMarkup(
+    keyboard = [
+        [
+            InlineKeyboardButton(text="Tutor Mode", callback_data= "tutor"),
+            InlineKeyboardButton(text="Student Mode", callback_data= "student")
+        ]
+    ]
+)
 
+
+tutorKB = ReplyKeyboardMarkup(
+    keyboard = [
+        [
+            KeyboardButton(text = "Create Quiz"),
+            KeyboardButton(text = "View Quizzes"),
+            KeyboardButton(text= "/testthething")
+        ]
+    ]
+)
 #keyboard demo 
 
     #reply keyboard

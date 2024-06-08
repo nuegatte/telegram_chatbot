@@ -15,3 +15,18 @@ firebase = pyrebase.initialize_app(firebaseConfig)
 auth = firebase.auth()
 
 db = firebase.database()
+
+data = {
+    "subject_name": "Nanananna",
+    "subject_code": "222222"
+}
+# db.child("Subject List").child("222222").update({"subject_name" : "AYer"})
+
+# dba = { "Subject List/222222" : {"subject_name": "Proper Name", "subject_code" : 123432}, "Subject List/352822": {"subject_name" : "another proper name ", "subject_code" : 352822}}
+
+# db.update(dba)
+
+sub = db.child("Subject List").get()
+
+for s in sub.each():
+    print(s.val())
