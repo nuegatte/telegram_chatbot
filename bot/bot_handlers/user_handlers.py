@@ -67,8 +67,7 @@ random - random 6 digit number
 #         db.child("users").child(userID).set(userdata)
 #         await state.set_state(States.default)
 #         await message.answer(f"Welcome to Tutor Bot, {str(username)}! I'm here to help you with your studies.")
-class testrouter (Router):
-    router = sub_rou
+
 user_router = Router()
 default_router = Router()
 
