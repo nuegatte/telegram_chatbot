@@ -12,7 +12,7 @@ class MyCallback(CallbackData, prefix = "my"):
 
 
 testingKB = InlineKeyboardMarkup(
-    keyboard = [
+    inline_keyboard = [
         [
             InlineKeyboardButton(text="Tutor Mode", callback_data= "tutor"),
             InlineKeyboardButton(text="Student Mode", callback_data= "student")

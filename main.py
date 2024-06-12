@@ -1,7 +1,9 @@
 import asyncio 
 from aiogram import Dispatcher
 from bot_instance import bot
-from bot.bot_handlers.user_handlers import user_router
+from aiogram.fsm.storage.memory import MemoryStorage
+
+from bot.bot_handlers.user_handlers import user_router, default_router
 from bot.config import BotConfig
 
 
@@ -9,6 +11,7 @@ def register_routers(dp: Dispatcher) -> None:
     """Registers routers"""
 
     dp.include_router(user_router)
+    dp.include_router(default_router)
 
 
 async def main() -> None:
@@ -18,7 +21,9 @@ async def main() -> None:
         admin_ids=[373468118], 
         welcome_message="Welcome to our Python Bot!"
         )
-    dp = Dispatcher()
+
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
     dp["config"] = config
 
     register_routers(dp)

@@ -28,5 +28,9 @@ data = {
 
 sub = db.child("Subject List").get()
 
-for s in sub.each():
-    print(s.val())
+check_tutor = db.child("users").child(373468118).child("tutor").get()
+
+
+
+# for s in sub.each():
+#     print(s.val())
