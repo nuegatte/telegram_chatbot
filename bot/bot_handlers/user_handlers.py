@@ -83,7 +83,7 @@ async def cmd_start_user(message: types.Message, state: FSMContext):
 async def set_default_state(message: types.Message, state: FSMContext):
     await state.set_state(States.default)
     await message.answer("State changed to default.")
-    await 
+    # await 
 
 @default_router.message(Command("start"), States.default)
 async def cmd_start_default(message: types.Message):
@@ -247,10 +247,10 @@ async def cmd_admin_info(message: types.Message, config: BotConfig):
 
 
 #inline reply/callback 
-@user_router.callback_query(F.data == "hello")
-async def testingbro(query : CallbackQuery,config: BotConfig):
-    await query.message.answer('LESGOOOOOOOOO')
-    await cmd_start(query.message, config)
+# @user_router.callback_query(F.data == "hello")
+# async def testingbro(query : CallbackQuery,config: BotConfig):
+#     await query.message.answer('LESGOOOOOOOOO')
+#     # await cmd_start(query.message, config)
 
 @user_router.callback_query(F.data== "hello1")
 async def testingbro(query : CallbackQuery,config: BotConfig):
