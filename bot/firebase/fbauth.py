@@ -1,5 +1,6 @@
 import pyrebase
 
+
 firebaseConfig = {
     'apiKey': "AIzaSyBUAKY_gfQGaT2JIlRCIQnmnjWCFcdz15s",
     'authDomain': "telegrambot-7a928.firebaseapp.com",
@@ -13,24 +14,9 @@ firebaseConfig = {
 
 firebase = pyrebase.initialize_app(firebaseConfig)
 auth = firebase.auth()
-
+email = "kingcanut@gmail.com"
+password = "00190029"
+user = auth.sign_in_with_email_and_password(email, password)
+id_token = user['idToken']
 db = firebase.database()
 
-data = {
-    "subject_name": "Nanananna",
-    "subject_code": "222222"
-}
-# db.child("Subject List").child("222222").update({"subject_name" : "AYer"})
-
-# dba = { "Subject List/222222" : {"subject_name": "Proper Name", "subject_code" : 123432}, "Subject List/352822": {"subject_name" : "another proper name ", "subject_code" : 352822}}
-
-# db.update(dba)
-
-sub = db.child("Subject List").get()
-
-check_tutor = db.child("users").child(373468118).child("tutor").get()
-
-
-
-# for s in sub.each():
-#     print(s.val())
