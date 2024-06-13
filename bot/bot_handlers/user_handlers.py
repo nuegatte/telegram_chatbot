@@ -1,5 +1,5 @@
 from aiogram import Router, types , F
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.filters import Command
 from bot.config import BotConfig
 from bot import keyboard
@@ -16,8 +16,6 @@ import asyncio
 class student(StatesGroup):
     default = State()
 
-class lecturer(StatesGroup):
-    default = State()
 
 
 
@@ -51,7 +49,7 @@ async def startup(message: types.Message, state : FSMContext):
 
         if check_tutor == True:
             await state.set_state(lecturer.default)
-
+            logging.info("You are added as a lecturer.")
             await message.reply("Welcome back, lecturer.")
         elif check_tutor == False:
             await state.set_state(student.default)
@@ -70,27 +68,7 @@ async def startup(message: types.Message, state : FSMContext):
 async def grant_permission(message: types.Message , state : FSMContext):
     await message.reply("testing1")
 
-    
-
-@user_router.message(Command("restricted"), lecturer.default)
-async def restricted_command(message: types.Message):
-    await message.reply("You have access to this restricted command!")
-
-@user_router.message(Command("check_subjects"), lecturer.default)
-async def check_subjects(message: types.Message):
-    # Query the database for all subjects
-    subjects = db.child("Subject List").get()
-    
-    if subjects.each():
-        # If there are subjects, format and send the list
-        response = "Here are the existing subjects:\n\n"
-        for subject in subjects.each():
-            data = subject.val()
-            response += f"Subject Name: {data['subject_name']}\nSubject Code: {data['subject_code']}\n\n"
-    else:
-        response = "No subjects found in the database."
-
-    await message.answer(response)
+  
 
 # @user_router.message(state=Form.awaiting_command, commands=['more_commands'])
 # async def more_commands(message: types.Message, state: FSMContext):
@@ -117,40 +95,6 @@ async def check_subjects(message: types.Message):
 
 # /start command - create new subject for lecturers
 
-@user_router.message(Command("create_subject"))
-async def sub_input(call: CallbackQuery, state : FSMContext):
-    await state.set_state(lecturer.default)
-    await call.message.edit_text("Enter the subject name:")
-    await state.update_data(message=call)
-
-@user_router.message(lecturer.default)
-async def sub_output(message: types.Message, state: FSMContext):
-    subject_name = message.text
-
-    # Query the database to check for duplicate subject names
-    existing_subjects = db.child("Subject List").order_by_child("subject_name").equal_to(subject_name).get()
-
-    if existing_subjects.each():
-        # If a duplicate is found, inform the user
-        await message.answer("This subject name already exists. Please enter a different subject name.")
-    else:
-        # Generate a random 6-digit subject code
-        def rand():
-            start = 10 ** (6 - 1)
-            end = (10 ** 6) - 1
-            return randint(start, end)
-
-        sub_code = (rand())
-
-        # Prepare the data to be added to the database
-        data = {
-            "subject_name": subject_name,
-            "subject_code": sub_code
-        }
-
-        # Add the new subject to the database
-        db.child("Subject List").child(sub_code).set(data)
-        await message.answer(f"Subject Name: {subject_name}\nSubject Code: ||{str(sub_code)}||", parse_mode="MarkdownV2")
 
     # Clear the state
 
@@ -221,3 +165,158 @@ async def testingbro(query : CallbackQuery,config: BotConfig):
 
 
 
+class lecturer(StatesGroup):
+    default = State()
+    creat_sub = State()
+    check_students = State()
+
+
+# testing if entered lect state
+@user_router.message(Command("restricted"), lecturer.default)
+async def restricted_command(message: types.Message):
+    await message.reply("You have access to this restricted command!")
+
+# check subject list of lecturer
+@user_router.message(Command("check_subjects"), lecturer.default)
+async def check_subjects(message: types.Message):
+    # Query the database for all subjects
+    subjects = db.child("Subject List").get()
+    
+    if subjects.each():
+        # If there are subjects, format and send the list
+        response = "Here are the existing subjects:\n\n"
+        for subject in subjects.each():
+            data = subject.val()
+            response += f"Subject Name: {data['subject_name']}\nSubject Code: {data['subject_code']}\n\n"
+    else:
+        response = "No subjects found in the database."
+
+    await message.answer(response)
+
+# @user_router.message(Command("pagination"))
+# async def pagination(message: types.Message):
+#     kb = types.InlineKeyboardMarkup()
+#     paginator = Paginator(data=kb, size=5)
+#     await message.answer(
+#         text='Some menu',
+#         reply_markup=paginator()
+#     )
+
+
+# page list thing
+
+
+def get_subjects():
+    try:
+        logging.info("Attempting to fetch subjects from Firebase.")
+        users_snapshot = db.child("Subject List").get(id_token)
+        if users_snapshot.each() is None:
+            logging.warning("No subjects found in Firebase.")
+            return []
+        users = [user.key() for user in users_snapshot.each()]
+        logging.info(f"Retrieved subjects: {users}")
+        return users
+    except Exception as e:
+        logging.error(f"Error fetching subjects: {e}")
+        return []
+
+current_page = 0
+items_per_page = 5
+
+def get_page(page_number, data):
+    start = page_number * items_per_page
+    end = start + items_per_page
+    return data[start:end]
+
+def create_navigation_buttons(page_number, total_pages):
+    keyboard = InlineKeyboardMarkup()
+    if page_number > 0:
+        keyboard.insert(InlineKeyboardButton("⬅️ Previous", callback_data=f"prev_{page_number}"))
+    if page_number < total_pages - 1:
+        keyboard.insert(InlineKeyboardButton("Next ➡️", callback_data=f"next_{page_number}"))
+    return keyboard
+
+@user_router.message(Command("checklist"))
+async def start_handler(message: types.Message, state: FSMContext):
+    logging.info("Checklist command received.")
+    subjects = get_subjects()
+    if not subjects:
+        await message.answer("No subjects found.")
+        return
+    
+    total_pages = (len(subjects) + items_per_page - 1) // items_per_page
+    page_data = get_page(current_page, subjects)
+    list_text = "\n".join([f"{i + 1}. {item}" for i, item in enumerate(page_data)])
+    
+    logging.info(f"Displaying page {current_page + 1} of {total_pages}")
+    
+    keyboard = create_navigation_buttons(current_page, total_pages)
+    await message.answer(f"Page {current_page + 1}/{total_pages}\n{list_text}", reply_markup=keyboard)
+    await state.set_state("pagination")
+
+@user_router.callback_query(F.data.startswith("prev_"))
+async def prev_page_handler(callback_query: types.CallbackQuery, state: FSMContext):
+    global current_page
+    logging.info(f"Previous page button clicked. Current page: {current_page}")
+    current_page = int(callback_query.data.split("_")[1]) - 1
+    subjects = get_subjects()
+    total_pages = (len(subjects) + items_per_page - 1) // items_per_page
+    page_data = get_page(current_page, subjects)
+    list_text = "\n".join([f"{i + 1}. {item}" for i, item in enumerate(page_data)])
+    
+    logging.info(f"Displaying page {current_page + 1} of {total_pages}")
+    
+    keyboard = create_navigation_buttons(current_page, total_pages)
+    await callback_query.message.edit_text(f"Page {current_page + 1}/{total_pages}\n{list_text}", reply_markup=keyboard)
+
+@user_router.callback_query(F.data.startswith("next_"))
+async def next_page_handler(callback_query: types.CallbackQuery, state: FSMContext):
+    global current_page
+    logging.info(f"Next page button clicked. Current page: {current_page}")
+    current_page = int(callback_query.data.split("_")[1]) + 1
+    subjects = get_subjects()
+    total_pages = (len(subjects) + items_per_page - 1) // items_per_page
+    page_data = get_page(current_page, subjects)
+    list_text = "\n".join([f"{i + 1}. {item}" for i, item in enumerate(page_data)])
+    
+    logging.info(f"Displaying page {current_page + 1} of {total_pages}")
+    
+    keyboard = create_navigation_buttons(current_page, total_pages)
+    await callback_query.message.edit_text(f"Page {current_page + 1}/{total_pages}\n{list_text}", reply_markup=keyboard)
+
+
+@user_router.message(Command("create_subject"), lecturer.default)
+async def sub_input(call: CallbackQuery, state : FSMContext):
+    await state.set_state(lecturer.creat_sub)
+    await call.message.edit_text("Enter the subject name:")
+    await state.update_data(message=call)
+
+@user_router.message(lecturer.creat_sub)
+async def sub_output(message: types.Message, state: FSMContext):
+    subject_name = message.text
+
+    # Query the database to check for duplicate subject names
+    existing_subjects = db.child("Subject List").order_by_child("subject_name").equal_to(subject_name).get()
+
+    if existing_subjects.each():
+        # If a duplicate is found, inform the user
+        await message.answer("This subject name already exists. Please enter a different subject name.")
+    else:
+        # Generate a random 6-digit subject code
+        def rand():
+            start = 10 ** (6 - 1)
+            end = (10 ** 6) - 1
+            return randint(start, end)
+
+        sub_code = (rand())
+
+        # Prepare the data to be added to the database
+        data = {
+            "subject_name": subject_name,
+            "subject_code": sub_code
+        }
+
+        # Add the new subject to the database
+        db.child("Subject List").child(sub_code).set(data)
+        await message.answer(f"Subject Name: {subject_name}\nSubject Code: ||{str(sub_code)}||", parse_mode="MarkdownV2")
+        await state.set_state(lecturer.default)

@@ -1,4 +1,4 @@
-from aiogram import Bot, types
+from aiogram import Bot
 
 from token_api import TOKEN_API
 
