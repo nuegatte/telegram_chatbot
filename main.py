@@ -1,7 +1,6 @@
 import asyncio 
 from aiogram import Dispatcher
 from bot_instance import bot
-from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.bot_handlers.user_handlers import user_router
 from bot.config import BotConfig
@@ -10,7 +9,7 @@ from bot.config import BotConfig
 def register_routers(dp: Dispatcher) -> None:
     """Registers routers"""
 
-    dp.include_routers(user_router)
+    dp.include_router(user_router)
 
 
 
@@ -18,12 +17,12 @@ async def main() -> None:
     """The main function which will execute our event loop and start polling."""
     
     config = BotConfig(
-        admin_ids=[373468118], 
+        admin_ids=[373468118, 6749403874], 
         welcome_message="Welcome to our Python Bot!"
         )
 
-    storage = MemoryStorage()
-    dp = Dispatcher(storage=storage)
+
+    dp = Dispatcher()
     dp["config"] = config
 
     register_routers(dp)

@@ -21,15 +21,7 @@ testingKB = InlineKeyboardMarkup(
 )
 
 
-tutorKB = ReplyKeyboardMarkup(
-    keyboard = [
-        [
-            KeyboardButton(text = "Create Quiz"),
-            KeyboardButton(text = "View Quizzes"),
-            KeyboardButton(text= "/testthething")
-        ]
-    ]
-)
+
 #keyboard demo 
 
     #reply keyboard
@@ -52,12 +44,17 @@ reply_kb = ReplyKeyboardMarkup(
 
 
     #inline keyboard
-ikb = InlineKeyboardMarkup(
+tutor_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text= "Loop button!", callback_data=("hello")),
+            InlineKeyboardButton(text= "Check Subjects!", callback_data=("check_subject")),
             InlineKeyboardButton(text= "Admin info!", callback_data=("hello1")),
-            InlineKeyboardButton(text= "Reply keyboard demo!", callback_data=("hello2"))
+            InlineKeyboardButton(text= "Student List", callback_data=("check_student"))
+            
+
+        ],
+        [
+            InlineKeyboardButton(text= "Create_subject", callback_data=("create_sub"))
 
         ]
     ]

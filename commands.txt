@@ -3,14 +3,12 @@
 commands
 
 perms - check permissions
-check_subjects - check subject list
-restricted - check restrict
-testing - testing the modes
+getstate - check current state
 start - start the bot 
-repeat - uninterrupted repeat msg
+about - what about you?
 admin_info - yes
 stop - stop process
-random - random 6 digit number
+
 
 
 """
