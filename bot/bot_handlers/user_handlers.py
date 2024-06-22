@@ -190,7 +190,7 @@ async def sub_output(message: types.Message, state: FSMContext):
     existing_subjects = db.child("Subject List").order_by_child("subject_name").equal_to(subject_name).get(id_token)
 
     if existing_subjects.each():
-        await message.answer("This subject name already exists. Please enter a different subject name.")
+        await message.answer("This subject name already exists. Please enter a different subject name.", reply_markup= keyboard.return_button)
     else:
         def rand():
             start = 10 ** (6 - 1)
@@ -203,11 +203,16 @@ async def sub_output(message: types.Message, state: FSMContext):
             "subject_name": subject_name,
             "subject_code": sub_code
         }
-
-        db.child("Subject List").child(sub_code).set(data)
-        await message.answer(f"Subject Name: {subject_name}\nSubject Code: ||{str(sub_code)}||", parse_mode="MarkdownV2")
         await state.set_state(lecturer.default)
+        db.child("Subject List").child(sub_code).set(data, id_token)
+        await message.answer(f"Subject Name: {subject_name}\nSubject Code: ||{str(sub_code)}||", parse_mode="MarkdownV2", reply_markup= keyboard.return_button)
 
+@user_router.callback_query(F.data == "return", lecturer.default)
+async def return_to_menu(call : types.CallbackQuery, state : FSMContext):
+    user_id = call.from_user.id
+    username = call.from_user.username
+
+    await handle_startup(user_id, username, call.message, state)
 
 
 

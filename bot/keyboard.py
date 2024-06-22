@@ -72,3 +72,9 @@ subject_ikb = InlineKeyboardMarkup(
 
     ]
 )
+
+return_button = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="Return to menu", callback_data="return")]
+    ]
+)
