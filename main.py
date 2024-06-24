@@ -17,7 +17,8 @@ async def main() -> None:
     """The main function which will execute our event loop and start polling."""
     
     config = BotConfig(
-        admin_ids=[373468118, 6749403874], 
+        admin_ids=[ 6749403874], 
+        # admin_ids=[373468118, 6749403874], 
         welcome_message="Welcome to our Python Bot!"
         )
 

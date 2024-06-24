@@ -9,8 +9,8 @@ from random import randint
 from ..firebase.fbauth import db, id_token
 import sys, logging
 import asyncio
-from aiogram.exceptions import TelegramNetworkError
-from ..bot_handlers.paginator import items_per_page, get_page,extract_from_db,create_navigation_buttons, generate_list_text,calculate_total_pages
+from aiogram.exceptions import TelegramNetworkError,TelegramBadRequest
+from ..bot_handlers.paginator import   pagination, subject_access
 from aiogram.fsm.state import State, StatesGroup
 
 
@@ -21,6 +21,13 @@ class lecturer(StatesGroup):
     default = State()
     create_sub = State()
     check_sub = State()
+    edit_sub = State()
+    check_students = State()
+
+class admin(StatesGroup):
+    default = State()
+    create_lecturer = State()
+    check_lecturers = State()
     check_students = State()
 
 
@@ -33,15 +40,24 @@ user_router = Router()
 # Set up logging, show message handling in real time
 logging.basicConfig(level=logging.INFO)
 
+
+# startup handler
 @user_router.message(Command("start"))
-async def startup(message: types.Message, state: FSMContext):
+async def startup(message: types.Message, state: FSMContext, config : BotConfig):
+    global userID
     userID = message.from_user.id
     username = message.from_user.username
-    await handle_startup(userID, username, message, state)
+
+    if userID in config.admin_ids:
+        await state.set_state(admin.default)
+        await message.answer("Welcome, admin!")
+
+    else : 
+        await handle_startup(userID, username, message, state)
 
 async def handle_startup(userID: int, username: str, message: types.Message, state: FSMContext):
 
-    
+
     userdata = {
         "UserID" : userID,
         "Username" : username,
@@ -69,6 +85,8 @@ async def handle_startup(userID: int, username: str, message: types.Message, sta
         await state.set_state(student.default)
         await message.answer(f"Welcome to comm_Edubot, {str(username)}! ")
 
+
+
 @user_router.message(Command("getstate"))
 async def get_state(message: types.Message, state: FSMContext):
     state_name = await state.get_state()
@@ -84,27 +102,13 @@ async def cmd_admin_info(message: types.Message, config: BotConfig):
     else:
         await message.answer(f"{message.from_user.id} You are not an admin.")
 
-@user_router.message(Command("kbok"), lecturer.default)
-async def okboss(message: types.Message, state : FSMContext):
-    ok = await state.get_state()
-    e = ok
-    test = InlineKeyboardMarkup( inline_keyboard=[])
-    test.inline_keyboard.append([InlineKeyboardButton(text = "test", callback_data= f"test{ok}")])
-    logging.info(f"state is : {e}")
-    await message.answer("hello",reply_markup= test)
 
 @user_router.message(Command("about"), lecturer.default)
 async def about_command(message: types.Message):
     await message.answer("This is a bot designed to assist lecturers in managing their subjects and students")
 
 
-@user_router.message(Command("perms"),student.default)
-async def grant_permission(message: types.Message ):
-    await message.reply("testing1")
 
-@user_router.message(Command("perms"),lecturer.default)
-async def grant_permission(message: types.Message ):
-    await message.reply("testing as lect")  
 
 @user_router.message(Command("stop"))
 async def cmd_stop(message: types.Message):
@@ -112,59 +116,51 @@ async def cmd_stop(message: types.Message):
     asyncio.get_event_loop().call_later(0.5, sys.exit, 0)
 
 
- #respond to certain text in messages
-# @user_router.message()
-# async def echo_message(message: types.Message):
-#     if "hi" in message.text.upper() or "hello" in message.text.lower() or "hai " in message.text.lower():
-#         await message.answer("Hello brother! How are you?")
-#     elif "bye" in message.text.lower() or " bai " in message.text.lower()  or "cya" in message.text.lower():
-#         await message.answer("Bye brother! See you soon!")
-#         await cmd_stop(message)
-#     elif "nice" in message.text.lower():
-#         await message.answer("nice balls bro lol!")
 
 
+# Lecturer handlers
 
-
-
+#    Subject Checker pagination
 @user_router.callback_query(F.data == "check_subject", lecturer.default)
 async def cmd_checklist(call : types.CallbackQuery, state: FSMContext):
+
+    global subject_data
+    subject_data =  db.child("Lecturers").child(userID).child("Subject_List").get(id_token)
     await state.set_state(lecturer.check_sub)
-    subjects = extract_from_db("Subject List")
-    total_pages = calculate_total_pages(subjects)
-    page_data = get_page(0, subjects)
-    sub_list = generate_list_text(page_data)
+    first_page, kb = pagination(call,subject_data)
 
-    keyboard = create_navigation_buttons(0, total_pages, page_data)
+    await call.message.edit_text(first_page, reply_markup=kb)
 
-    await call.message.edit_text(f"Page 1/{total_pages}\n\n{sub_list}", reply_markup=keyboard)
-
-
-
+#   prev, next page handling
 @user_router.callback_query(F.data.startswith("prev_") , lecturer.check_sub)
 @user_router.callback_query(F.data.startswith("next_"), lecturer.check_sub)
 async def subjectList_handler(call: types.CallbackQuery):
-    global current_page
-    direction, page_number = call.data.split("_")
-    if direction == "prev":
-        current_page = int(page_number) - 1
-    elif direction == "next": 
-        current_page = int(page_number) + 1
-    
-    subjects = extract_from_db("Subject List")
-    total_pages = calculate_total_pages(subjects)
-    page_data = get_page(current_page, subjects)
-    sub_list = generate_list_text(page_data)
 
-    keyboard = create_navigation_buttons(current_page, total_pages, page_data)
+
+    page, kb = pagination(call, subject_data)
    
     try:
-        await call.message.edit_text(f"Page {current_page + 1}/{total_pages}\n\n{sub_list}", reply_markup=keyboard)
+        await call.message.edit_text(page, reply_markup=kb)
     except TelegramNetworkError as e:
         logging.error(f"Network error when editing message: {e}")
 
+#   access, edit and delete subjects
+@user_router.callback_query(F.data.startswith("item_"), lecturer.check_sub)
+async def item_handler(call : types.CallbackQuery):
 
 
+    subject_details, kb = subject_access(call, subject_data, userID)
+
+    await call.message.edit_text(subject_details, reply_markup=kb)
+
+#   return to subject checker
+@user_router.callback_query(F.data == "back_toList", lecturer.check_sub)
+async def back_to_list(call: types.CallbackQuery, state: FSMContext):
+
+    await cmd_checklist(call, state)
+        
+#   return to menu 
+@user_router.callback_query(F.data == "return", lecturer.default)
 @user_router.callback_query(F.data == "return", lecturer.check_sub)
 async def return_to_menu(call : types.CallbackQuery, state : FSMContext):
     user_id = call.from_user.id
@@ -173,7 +169,7 @@ async def return_to_menu(call : types.CallbackQuery, state : FSMContext):
     await handle_startup(user_id, username, call.message, state)
 
 
-
+    #  Subject Creation 
 @user_router.callback_query(F.data == "create_sub", lecturer.default)
 async def sub_input(call : CallbackQuery, state : FSMContext):
 
@@ -185,38 +181,89 @@ async def sub_input(call : CallbackQuery, state : FSMContext):
 
 @user_router.message(lecturer.create_sub)
 async def sub_output(message: types.Message, state: FSMContext):
-    subject_name = message.text
-
-    existing_subjects = db.child("Subject List").order_by_child("subject_name").equal_to(subject_name).get(id_token)
-
-    if existing_subjects.each():
-        await message.answer("This subject name already exists. Please enter a different subject name.", reply_markup= keyboard.return_button)
-    else:
-        def rand():
-            start = 10 ** (6 - 1)
-            end = (10 ** 6) - 1
-            return randint(start, end)
-
-        sub_code = (rand())
-
-        data = {
-            "subject_name": subject_name,
-            "subject_code": sub_code
-        }
+    async def retry(error_message :str):
         await state.set_state(lecturer.default)
-        db.child("Subject List").child(sub_code).set(data, id_token)
-        await message.answer(f"Subject Name: {subject_name}\nSubject Code: ||{str(sub_code)}||", parse_mode="MarkdownV2", reply_markup= keyboard.return_button)
+        retry_button = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="Retry", callback_data="create_sub")]
+            ]
+        )
+        await message.answer(error_message, reply_markup= retry_button)
 
-@user_router.callback_query(F.data == "return", lecturer.default)
-async def return_to_menu(call : types.CallbackQuery, state : FSMContext):
-    user_id = call.from_user.id
-    username = call.from_user.username
+    try:
+        id = message.from_user.id
+        subject_name = message.text
 
-    await handle_startup(user_id, username, call.message, state)
+        # existing_subjects = db.child("Lecturers").child(id).order_by_child("Subject_List").equal_to(subject_name).get(id_token)
+        subjects_ref = db.child("Lecturers").child(id).child("Subject_List")
+        existing_subjects = subjects_ref.order_by_child("subject_name").equal_to(subject_name).get(id_token)
+
+
+        if existing_subjects.each():
+            retry("This subject name already exists. Please enter a different subject name.")
+        else:
+            def rand():
+                start = 10 ** (6 - 1)
+                end = (10 ** 6) - 1
+                return randint(start, end)
+
+            sub_code = (rand())
+
+            data = {
+                "subject_name": subject_name,
+                "subject_code": sub_code,
+                "student_list": {}
+            }
+            await state.set_state(lecturer.default)
+            db.child("Lecturers").child(id).child("Subject_List").child(subject_name).set(data, id_token)
+            await message.answer(f"Subject Name: {subject_name}\nSubject Code: ||{str(sub_code)}||", parse_mode="MarkdownV2", reply_markup= keyboard.return_button)
+    except TelegramBadRequest as e:
+        await retry("Other symbols (!, @, #, $, etc.) are not allowed in a subject name, please try again.")
+    except Exception as e:
+        await retry("An error occurred while processing your request. Please try again later.")
+
+
+@user_router.callback_query(F.data.startswith("delete_"), lecturer.check_sub)
+async def delete_subject(call: types.CallbackQuery, state: FSMContext):
+    subject = call.data.split("_")[1]
+    db.child("Subject List").child(subject).remove(id_token)
+    await call.answer(f"Subject {subject} deleted.")
+    await back_to_list(call, state)
+
+@user_router.callback_query(F.data.startswith("edit_"), lecturer.check_sub)
+async def edit_subject_name(call: types.CallbackQuery, state: FSMContext):
+    subject = call.data.split("_")[1]
+    await state.update_data(subject_to_edit=subject)
+    await call.message.edit_text(f"Enter new name for subject {subject}:")
+    await state.set_state(lecturer.edit_sub)
+
+
+@user_router.message(F.text, lecturer.edit_sub) 
+async def enter_new_subject_name(message: types.Message, state: FSMContext):
+    new_name = message.text
+    data = await state.get_data()
+    subject = data.get("subject_to_edit")
+    subject_data = db.child("Subject List").child(subject).get(id_token).val()
+
+    # Update the subject with the new name
+    db.child("Subject List").child(subject).remove(id_token)
+    db.child("Subject List").child(new_name).set(subject_data, id_token)
+    await state.set_state(lecturer.check_sub)
+    await message.answer(f"Subject name changed to {new_name}.", reply_markup= keyboard.return_button)
 
 
 
+#  Testings
 @user_router.callback_query(F.data== "hello1", lecturer.default)
 async def testingbro(call : CallbackQuery,config: BotConfig):
     await call.message.answer('Checking Admin info, callback = hello1')
     await cmd_admin_info(call.message, config)
+
+@user_router.message(Command("perms"),student.default)
+async def grant_permission(message: types.Message ):
+    await message.reply("testing1")
+
+@user_router.message(Command("perms"),lecturer.default)
+async def grant_permission(message: types.Message ):
+    await message.reply("testing as lect")  
+
