@@ -3,13 +3,14 @@ from aiogram import Dispatcher
 from bot_instance import bot
 
 from bot.bot_handlers.user_handlers import user_router
+from bot.bot_handlers.group_handlers import group_router
 from bot.config import BotConfig
 
 
 def register_routers(dp: Dispatcher) -> None:
     """Registers routers"""
 
-    dp.include_router(user_router)
+    dp.include_routers(user_router, group_router)
 
 
 

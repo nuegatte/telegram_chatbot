@@ -19,4 +19,4 @@ password = "00190029"
 user = auth.sign_in_with_email_and_password(email, password)
 id_token = user['idToken']
 db = firebase.database()
-
+storage = firebase.storage()
